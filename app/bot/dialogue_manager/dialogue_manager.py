@@ -5,7 +5,6 @@ from jinja2 import Template
 from app.admin.bots.store import get_bot
 from app.admin.intents.store import list_intents
 from app.bot.memory import MemorySaver
-from app.bot.memory.memory_saver_mongo import MemorySaverMongo
 from app.bot.memory.models import State
 from app.bot.nlu.pipeline import NLUPipeline
 from app.bot.nlu.pipeline_utils import get_pipeline
@@ -17,7 +16,13 @@ from app.bot.dialogue_manager.models import (
 )
 from app.bot.dialogue_manager.http_client import call_api, APICallExcetion
 from app.config import app_config
-from app.database import client
+
+# Import appropriate memory saver based on configuration
+if app_config.USE_POSTGRESQL:
+    from app.bot.memory.memory_saver_postgres import MemorySaverPostgreSQL as MemorySaverImpl
+else:
+    from app.bot.memory.memory_saver_mongo import MemorySaverMongo as MemorySaverImpl
+    from app.database import client
 
 logger = logging.getLogger("dialogue_manager")
 
@@ -65,7 +70,11 @@ class DialogueManager:
             bot.nlu_config.traditional_settings.intent_detection_threshold
         )
 
-        memory_saver = MemorySaverMongo(client)
+        # Initialize appropriate memory saver
+        if app_config.USE_POSTGRESQL:
+            memory_saver = MemorySaverImpl()
+        else:
+            memory_saver = MemorySaverImpl(client)
 
         return cls(
             memory_saver,
