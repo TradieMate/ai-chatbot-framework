@@ -32,12 +32,14 @@ class ZeroShotNLUOpenAI(NLUComponent):
         self.entities = entities or []
 
         # Initialize the OpenAI LLM
+        from app.config import app_config
+        
         self.llm = ChatOpenAI(
-            base_url=kwargs.get("base_url", "http://127.0.0.1:11434/v1"),
-            api_key=kwargs.get("api_key", "not-need-for-local-models"),
-            model_name=kwargs.get("model_name", "not-need-for-local-models"),
-            temperature=kwargs.get("temperature", 0),
-            extra_body={"max_tokens": kwargs.get("max_tokens", 4096)},
+            base_url=kwargs.get("base_url", app_config.OPENAI_BASE_URL),
+            api_key=kwargs.get("api_key", app_config.OPENAI_API_KEY),
+            model_name=kwargs.get("model_name", app_config.OPENAI_MODEL),
+            temperature=kwargs.get("temperature", app_config.OPENAI_TEMPERATURE),
+            max_tokens=kwargs.get("max_tokens", app_config.OPENAI_MAX_TOKENS),
         )
 
         # Load and render the prompt template

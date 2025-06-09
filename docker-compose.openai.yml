@@ -1,0 +1,66 @@
+version: '2'
+name: ai-chatbot-framework-openai
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      - /bin/bash
+      - -c
+      - |
+        python manage.py migrate
+        fastapi run --host=0.0.0.0 --reload --port=8080
+    environment:
+      APPLICATION_ENV: Development
+      # Supabase PostgreSQL Configuration
+      DATABASE_URL: ${SUPABASE_DATABASE_URL}
+      POSTGRES_HOST: ${SUPABASE_HOST}
+      POSTGRES_PORT: ${SUPABASE_PORT:-5432}
+      POSTGRES_DB: ${SUPABASE_DATABASE}
+      POSTGRES_USER: ${SUPABASE_USER}
+      POSTGRES_PASSWORD: ${SUPABASE_PASSWORD}
+      
+      # OpenAI Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: https://api.openai.com/v1
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-3.5-turbo}
+      OPENAI_TEMPERATURE: ${OPENAI_TEMPERATURE:-0.7}
+      OPENAI_MAX_TOKENS: ${OPENAI_MAX_TOKENS:-4096}
+      
+      # Enable LLM NLU
+      USE_LLM_NLU: true
+      USE_ZERO_SHOT_NLU: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./app:/usr/src/app/app
+    depends_on:
+      - migrate
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dev.Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+    volumes:
+      - ./frontend/app:/app/app
+      - ./frontend/public:/app/public
+    restart: always
+    ports:
+      - "3000:3000"
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python manage.py migrate
+    environment:
+      APPLICATION_ENV: Development
+      DATABASE_URL: ${SUPABASE_DATABASE_URL}
+      POSTGRES_HOST: ${SUPABASE_HOST}
+      POSTGRES_PORT: ${SUPABASE_PORT:-5432}
+      POSTGRES_DB: ${SUPABASE_DATABASE}
+      POSTGRES_USER: ${SUPABASE_USER}
+      POSTGRES_PASSWORD: ${SUPABASE_PASSWORD}
