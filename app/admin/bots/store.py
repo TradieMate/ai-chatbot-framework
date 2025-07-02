@@ -24,13 +24,36 @@ async def ensure_default_bot():
 
 
 async def get_bot(name: str) -> Bot:
-    bot = await bot_collection.find_one({"name": name})
-    return Bot.model_validate(bot)
+    try:
+        bot = await bot_collection.find_one({"name": name})
+        if bot is None:
+            # If the requested bot doesn't exist, create a default bot object directly
+            # without trying to save it to the database
+            from datetime import datetime
+            default_bot = Bot(name="default")
+            default_bot.created_at = datetime.utcnow()
+            default_bot.updated_at = datetime.utcnow()
+            return default_bot
+        return Bot.model_validate(bot)
+    except Exception as e:
+        # If there's any error (including database connection issues),
+        # return a default bot object
+        print(f"Error getting bot: {e}")
+        from datetime import datetime
+        default_bot = Bot(name="default")
+        default_bot.created_at = datetime.utcnow()
+        default_bot.updated_at = datetime.utcnow()
+        return default_bot
 
 
 async def get_nlu_config(name: str) -> NLUConfiguration:
-    bot = await get_bot(name)
-    return bot.nlu_config
+    try:
+        bot = await get_bot(name)
+        return bot.nlu_config
+    except Exception as e:
+        print(f"Error getting NLU config: {e}")
+        # Return a default NLU configuration if there's an error
+        return NLUConfiguration()
 
 
 async def update_nlu_config(name: str, nlu_config: dict):
