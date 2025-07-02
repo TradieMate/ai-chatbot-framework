@@ -54,7 +54,7 @@ class TestingConfig(BaseConfig):
 
 
 class ProductionConfig(BaseConfig):
-    SPACY_LANG_MODEL: str = "en_core_web_lg"
+    SPACY_LANG_MODEL: str = "en_core_web_md"
 
 
 config = {
