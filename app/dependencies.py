@@ -21,9 +21,14 @@ async def set_dialogue_manager(dialogue_manager: DialogueManager):
 async def init_dialogue_manager():
     global _dialogue_manager
     logger.info("initializing dialogue manager")
-    _dialogue_manager = await DialogueManager.from_config()
-    _dialogue_manager.update_model(app_config.MODELS_DIR)
-    logger.info("dialogue manager initialized")
+    try:
+        _dialogue_manager = await DialogueManager.from_config()
+        _dialogue_manager.update_model(app_config.MODELS_DIR)
+        logger.info("dialogue manager initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize dialogue manager: {e}")
+        logger.info("Application will start without dialogue manager - database may not be available")
+        _dialogue_manager = None
 
 
 async def reload_dialogue_manager():
