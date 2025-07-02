@@ -60,6 +60,35 @@ async def ready():
     return {"status": "ok"}
 
 
+@app.get("/health")
+async def health():
+    """Check application health including database connectivity."""
+    from app.dependencies import get_dialogue_manager
+    
+    health_status = {
+        "status": "ok",
+        "database": "disconnected",
+        "dialogue_manager": "not_initialized"
+    }
+    
+    # Check dialogue manager
+    dialogue_manager = await get_dialogue_manager()
+    if dialogue_manager is not None:
+        health_status["dialogue_manager"] = "initialized"
+    
+    # Check database connectivity
+    try:
+        from app.database import client as database_client
+        # Try to ping the database
+        await database_client.admin.command('ping')
+        health_status["database"] = "connected"
+    except Exception as e:
+        health_status["database"] = f"error: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    return health_status
+
+
 @app.get("/api")
 async def api_root():
     return {"message": "Welcome to AI Chatbot Framework API"}
