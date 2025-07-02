@@ -8,7 +8,28 @@ class SpacyFeaturizer(NLUComponent):
     def __init__(self, model_name: str):
         import spacy
 
-        self.tokenizer = spacy.load(model_name)
+        try:
+            self.tokenizer = spacy.load(model_name)
+        except OSError as e:
+            # If the specified model is not available, try fallback models
+            fallback_models = ["en_core_web_md", "en_core_web_sm", "en"]
+            
+            print(f"Warning: Could not load spaCy model '{model_name}': {e}")
+            
+            for fallback_model in fallback_models:
+                try:
+                    print(f"Trying fallback model: {fallback_model}")
+                    self.tokenizer = spacy.load(fallback_model)
+                    print(f"Successfully loaded fallback model: {fallback_model}")
+                    break
+                except OSError:
+                    continue
+            else:
+                # If no models work, raise an informative error
+                raise OSError(
+                    f"Could not load spaCy model '{model_name}' or any fallback models. "
+                    f"Please install a spaCy model using: python -m spacy download en_core_web_md"
+                )
 
     def train(self, training_data: List[Dict[str, Any]], model_path: str) -> None:
         for example in training_data:
